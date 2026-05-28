@@ -1,0 +1,37 @@
+# =============================================================================
+# site-policies/group/acm-group-du-sno-ranGen.yaml
+# GROUP tier: policies for a CLASS of clusters (here: all SNO-DU clusters),
+# bound by labelSelector group-du-sno. This is where profile-shaped config lives
+# (PerformanceProfile, PTP, SR-IOV, tuned, etc.).
+# =============================================================================
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: group-du-sno
+policyDefaults:
+  namespace: ztp-group
+  placement:
+    labelSelector:
+      matchExpressions:
+        - key: group-du-sno
+          operator: Exists
+  remediationAction: inform
+  severity: low
+  namespaceSelector:
+    exclude:
+      - kube-*
+    include:
+      - "*"
+  evaluationInterval:
+    compliant: 10m
+    noncompliant: 10s
+policies:
+  - name: group-du-sno-config-policy
+    policyAnnotations:
+      ran.openshift.io/ztp-deploy-wave: "10"
+    manifests:
+      - path: source-crs/v4.20/PtpConfigSlave.yaml
+      - path: source-crs/v4.20/PerformanceProfile.yaml
+      - path: source-crs/v4.20/TunedPerformancePatch.yaml
+      # Per-group deviations from the reference manifest go in `patches:` blocks
+      # under the relevant manifest entry, e.g. interface names or CPU sets.

@@ -1,0 +1,21 @@
+# site-configs/kustomization.yaml
+# The clusters ArgoCD Application syncs this path. List each cluster's
+# ClusterInstance CR here. Add one entry per site as your fleet grows.
+#
+# Organize subdirectories by hub or by site-group as suits you. Here we use a
+# per-hub folder (hub-1/) so a multi-hub topology stays tidy.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - hub-1/example-sno.yaml
+  # - hub-1/site-2-standard.yaml
+  # - hub-2/site-3-3node.yaml
+
+# NOTE on searchPaths / reference-crs:
+# The install-time reference manifests (extra-manifests) are vendored under
+# reference-crs/v4.20/. If you configure a searchPaths directory for the
+# SiteConfig Operator, the pipeline uses THESE pinned manifests instead of
+# pulling from whatever ztp-site-generate container tag happens to run. That is
+# what makes this repo self-contained and version-explicit. Keep one subdir per
+# OCP version (v4.20/, v4.21/, ...) and bump clusterImageSetNameRef + the
+# version folder together when you upgrade.

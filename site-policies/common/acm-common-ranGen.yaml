@@ -1,0 +1,47 @@
+# =============================================================================
+# site-policies/common/acm-common-ranGen.yaml
+# COMMON tier: policies applied to ALL managed clusters (labelSelector common=true).
+# Uses the RHACM PolicyGenerator API (policy.open-cluster-management.io), which
+# replaces the deprecated PolicyGenTemplate (ran.openshift.io/v1).
+#
+# manifests[].path values are RELATIVE references into the vendored source-crs
+# library (../source-crs/v4.20/...). Copy the real source CRs there from your
+# extracted container: out/source-crs/  ->  site-policies/source-crs/v4.20/
+# =============================================================================
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: common
+policyDefaults:
+  namespace: ztp-common
+  placement:
+    labelSelector:
+      matchExpressions:
+        - key: common
+          operator: In
+          values:
+            - "true"
+  remediationAction: inform        # flip to enforce when you trust the rollout
+  severity: low
+  namespaceSelector:
+    exclude:
+      - kube-*
+    include:
+      - "*"
+  evaluationInterval:
+    compliant: 10m
+    noncompliant: 10s
+policies:
+  - name: common-subscriptions-policy
+    policyAnnotations:
+      ran.openshift.io/ztp-deploy-wave: "1"
+    manifests:
+      # Example operator subscriptions every cluster should carry.
+      # Paths must resolve against the vendored source-crs library.
+      - path: source-crs/v4.20/DefaultCatsrc.yaml
+      - path: source-crs/v4.20/DisconnectedICSP.yaml
+  - name: common-config-policy
+    policyAnnotations:
+      ran.openshift.io/ztp-deploy-wave: "2"
+    manifests:
+      - path: source-crs/v4.20/ReduceMonitoringFootprint.yaml

@@ -1,0 +1,36 @@
+# =============================================================================
+# site-policies/site/acm-example-sno-site.yaml
+# SITE tier: per-cluster overrides bound to a single cluster by the `sites`
+# label. Smallest blast radius -- only what is genuinely unique to one site
+# (e.g. site-specific SR-IOV network attachment, local storage device paths).
+# =============================================================================
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: example-sno-site
+policyDefaults:
+  namespace: ztp-site
+  placement:
+    labelSelector:
+      matchExpressions:
+        - key: sites
+          operator: In
+          values:
+            - "hub-1-sno"      # must match spec.extraLabels.ManagedCluster.sites
+  remediationAction: inform
+  severity: low
+  namespaceSelector:
+    exclude:
+      - kube-*
+    include:
+      - "*"
+  evaluationInterval:
+    compliant: 10m
+    noncompliant: 10s
+policies:
+  - name: example-sno-site-config-policy
+    policyAnnotations:
+      ran.openshift.io/ztp-deploy-wave: "100"
+    manifests:
+      - path: source-crs/v4.20/SriovNetwork.yaml
+      - path: source-crs/v4.20/SriovNetworkNodePolicy.yaml

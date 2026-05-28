@@ -1,0 +1,17 @@
+# site-policies/kustomization.yaml
+# The policies ArgoCD Application syncs this path. The PolicyGenerator kustomize
+# plugin runs each file listed under `generators:` and emits RHACM Policy +
+# Placement + PlacementBinding objects.
+#
+# `resources:` holds plain manifests (the namespaces). `generators:` holds the
+# PolicyGenerator CRs -- this split is what the plugin expects.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ns.yaml
+
+generators:
+  - common/acm-common-ranGen.yaml
+  - group/acm-group-du-sno-ranGen.yaml
+  - site/acm-example-sno-site.yaml

@@ -1,0 +1,23 @@
+# site-policies/ns.yaml
+# Namespaces the generated policies live in on the hub. One per tier here;
+# adjust to taste. Mirrors out/argocd/example/acmpolicygenerator/ns.yaml.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ztp-common
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ztp-group
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ztp-site
+  labels:
+    pod-security.kubernetes.io/enforce: privileged

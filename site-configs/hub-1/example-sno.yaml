@@ -1,0 +1,79 @@
+# =============================================================================
+# site-configs/hub-1/example-sno.yaml
+# A single-node OpenShift (SNO) cluster definition using the NEW ClusterInstance
+# API (siteconfig.open-cluster-management.io), which replaces SiteConfig v1
+# (ran.openshift.io). Note the flattened shape vs. old SiteConfig:
+#   - clusterName is directly under spec (no `clusters:` list)
+#   - templateRefs appear at BOTH cluster level and per-node level
+#   - nodes is a direct list under spec
+#
+# Copy/adapt the real example from your extracted container at:
+#   out/argocd/example/clusterinstance/example-sno.yaml
+# This file mirrors the documented shape but you must fill in real values.
+# =============================================================================
+apiVersion: siteconfig.open-cluster-management.io/v1alpha1
+kind: ClusterInstance
+metadata:
+  name: "hub-1-sno"
+  namespace: "hub-1-sno"          # namespace MUST match the cluster name
+spec:
+  clusterName: "hub-1-sno"
+  baseDomain: "example.com"
+  clusterImageSetNameRef: "openshift-4.20"   # must match a ClusterImageSet on the hub
+  pullSecretRef:
+    name: "assisted-deployment-pull-secret"  # Secret you create in this namespace
+  sshPublicKey: "ssh-rsa AAAA... <your-key>"
+  networkType: "OVNKubernetes"
+  machineNetwork:
+    - cidr: 192.168.1.0/24
+
+  # ---- LABELS: this is the hook the policy tiers bind against ----------------
+  # The PolicyGenerator placement labelSelectors below match these. This is how
+  # common/group/site policies get routed to the right clusters.
+  extraLabels:
+    ManagedCluster:
+      common: "true"            # -> matched by site-policies/common
+      group-du-sno: ""          # -> matched by site-policies/group
+      sites: "hub-1-sno"        # -> matched by site-policies/site
+
+  # ---- TEMPLATE REFS: cluster-level install templates ------------------------
+  # These point at ConfigMaps on the hub that hold the install templates the
+  # SiteConfig Operator renders. The 'ai-cluster-templates-v1' / 'ai-node-templates-v1'
+  # ConfigMaps ship with the SiteConfig Operator in the open-cluster-management ns.
+  templateRefs:
+    - name: ai-cluster-templates-v1
+      namespace: open-cluster-management
+
+  # ---- extra-manifests: vendored install-time MachineConfigs -----------------
+  # Reference the ConfigMap(s) created from site-configs/reference-crs/v4.20/extra-manifests.
+  # Leaving this commented uses the operator defaults; uncomment to pin your own.
+  # extraManifestsRefs:
+  #   - name: extra-manifests-v4.20
+
+  nodes:
+    - role: master
+      hostName: "hub-1-sno.example.com"
+      bmcAddress: "redfish-virtualmedia+https://192.168.1.102:8000/redfish/v1/Systems/1"
+      bmcCredentialsName:
+        name: "hub-1-sno-bmc-secret"   # BMCSecret you create in this namespace
+      bootMACAddress: "00:00:00:00:00:01"
+      bootMode: UEFI
+      automatedCleaningMode: disabled
+      templateRefs:
+        - name: ai-node-templates-v1
+          namespace: open-cluster-management
+      nodeNetwork:
+        interfaces:
+          - name: ens1f0
+            macAddress: "00:00:00:00:00:01"
+        config:
+          interfaces:
+            - name: ens1f0
+              type: ethernet
+              state: up
+              ipv4:
+                enabled: true
+                dhcp: false
+                address:
+                  - ip: 192.168.1.10
+                    prefix-length: 24
